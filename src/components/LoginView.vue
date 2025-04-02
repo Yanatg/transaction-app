@@ -49,7 +49,8 @@ const validateEmail = (email) => {
 </script>
 
 <template>
-  <div class="flex items-center justify-center min-h-screen bg-white">
+  <div class="flex flex-col items-center justify-center min-h-screen bg-white">
+    <h1 class="text-3xl font-bold mb-6 text-center">Welcome to Clicknext transaction system!</h1>
     <div class="p-8 rounded w-full max-w-sm">
       <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
       <form @submit.prevent="handleLogin">
