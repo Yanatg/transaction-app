@@ -3,65 +3,113 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
 export const useTransactionStore = defineStore('transactions', () => {
-  // --- State ---
-  // Initialize balance - maybe load from localStorage if needed for persistence beyond session?
-  // For now, starting with the example value.
+  // --- State --- (Existing balance and transactions refs)
   const balance = ref(1000000);
   const transactions = ref([
-      // Seed with example data from image 2 for testing TransactionHistoryView later
-      // In a real app, this would likely start empty or be fetched.
+     // Seed data...
        { id: 1, datetime: '2022-06-06T10:19:53Z', amount: 20000, type: 'Deposit', email: 'email@gmail.com' },
        { id: 2, datetime: '2022-02-15T21:24:24Z', amount: 40000, type: 'Withdraw', email: 'email@gmail.com' },
        { id: 3, datetime: '2021-12-31T23:59:49Z', amount: 100000, type: 'Withdraw', email: 'email@gmail.com' },
   ]);
 
-  // --- Getters ---
-  // Optional: Computed property for formatted balance
-  const formattedBalance = computed(() => {
-    return balance.value.toLocaleString('en-US'); // Formats with commas
+  // --- Getters --- (Existing formattedBalance)
+   const formattedBalance = computed(() => {
+    return balance.value.toLocaleString('en-US');
   });
 
-  // --- Actions ---
+  // --- Actions --- (Existing addTransaction)
   function addTransaction(type, amount) {
-    if (type === 'Deposit') {
+    // ... (existing addTransaction logic) ...
+     if (type === 'Deposit') {
       balance.value += amount;
     } else if (type === 'Withdraw') {
       if (amount > balance.value) {
-        console.error("Withdrawal amount exceeds balance.");
-        // Optionally throw an error or return a status
         return { success: false, message: 'Insufficient balance.' };
       }
       balance.value -= amount;
     } else {
         return { success: false, message: 'Invalid transaction type.' };
     }
-
-    // Add to history
-    const newTransaction = {
-      id: Date.now(), // Simple unique ID generation
-      datetime: new Date().toISOString(),
-      amount: amount,
-      type: type,
-      // You might want to get the logged-in user's email here
-      // Maybe store it in localStorage on login and retrieve it?
-      email: localStorage.getItem('userEmail') || 'unknown@example.com'
-    };
-    transactions.value.unshift(newTransaction); // Add to the beginning of the array
-
-    // Persist state? (Optional, for persistence beyond session)
-    // localStorage.setItem('balance', balance.value);
-    // localStorage.setItem('transactions', JSON.stringify(transactions.value));
-
+     const newTransaction = {
+        id: Date.now(), // Simple unique ID (can be improved later)
+        datetime: new Date().toISOString(), // Current date and time
+        amount: amount, // The amount passed to the function
+        type: type,     // The type ('Deposit' or 'Withdraw') passed to the function
+        // Attempt to get email stored during login, otherwise use a placeholder
+        email: localStorage.getItem('userEmail') || 'unknown@example.com'
+     };
+    transactions.value.unshift(newTransaction);
      return { success: true, message: `${type} successful.` };
   }
 
-  // // Example Edit/Delete functions (implement fully later for TransactionHistoryView)
-  // function updateTransaction(id, newAmount) {
-  //   // Find transaction, update amount, recalculate balance based on difference
-  // }
-  // function deleteTransaction(id) {
-  //   // Find transaction, remove it, recalculate balance
-  // }
+  // **NEW: Action to update a transaction**
+  function updateTransaction(id, newAmount) {
+    const transactionIndex = transactions.value.findIndex(t => t.id === id);
+    if (transactionIndex === -1) {
+      return { success: false, message: 'Transaction not found.' };
+    }
+
+    const transaction = transactions.value[transactionIndex];
+    const oldAmount = transaction.amount;
+    const difference = newAmount - oldAmount; // Positive if amount increased, negative if decreased
+
+    let potentialNewBalance;
+    if (transaction.type === 'Deposit') {
+      // If a deposit amount changes, the balance changes by the difference
+      potentialNewBalance = balance.value + difference;
+    } else { // type === 'Withdraw'
+      // If a withdrawal amount changes, the balance changes by the *negative* of the difference
+      // (e.g., withdrawing less increases balance, withdrawing more decreases it)
+      potentialNewBalance = balance.value - difference;
+    }
+
+    // Check if the balance adjustment is valid (doesn't go below zero)
+    // This is a simplified check; real-world might be more complex
+    if (potentialNewBalance < 0) {
+        return { success: false, message: 'Edit results in negative balance.'}
+    }
+
+    // Apply the changes
+    balance.value = potentialNewBalance;
+    transactions.value[transactionIndex].amount = newAmount;
+    // Optional: update a timestamp if needed
+    // transactions.value[transactionIndex].lastEdited = new Date().toISOString();
+
+    console.log(`Transaction ${id} updated. Balance recalculated.`);
+    return { success: true, message: 'Transaction updated successfully.' };
+  }
+
+   // Example Delete function placeholder (implement fully later)
+  // function deleteTransaction(id) { /* ... */ }
+  // **NEW: Action to delete a transaction**
+  function deleteTransaction(id) {
+    const transactionIndex = transactions.value.findIndex(t => t.id === id);
+    if (transactionIndex === -1) {
+      return { success: false, message: 'Transaction not found.' };
+    }
+
+    const transactionToDelete = transactions.value[transactionIndex];
+    const amount = transactionToDelete.amount;
+    const type = transactionToDelete.type;
+
+    // Adjust balance *before* removing the transaction
+    // Deleting a deposit means balance decreases
+    // Deleting a withdrawal means balance increases
+    if (type === 'Deposit') {
+      balance.value -= amount;
+    } else { // type === 'Withdraw'
+      balance.value += amount;
+      // Note: No negative balance check needed here, as we are reversing a past withdrawal.
+    }
+
+    // Remove the transaction from the array
+    transactions.value.splice(transactionIndex, 1);
+
+    console.log(`Transaction ${id} deleted. Balance recalculated.`);
+    return { success: true, message: 'Transaction deleted successfully.' };
+  }
+
+  // ... (rest of the store code: state, getters, actions definitions) ...
 
   return {
     // State
@@ -71,7 +119,7 @@ export const useTransactionStore = defineStore('transactions', () => {
     formattedBalance,
     // Actions
     addTransaction,
-    // updateTransaction, // Expose later
-    // deleteTransaction, // Expose later
+    updateTransaction, // <-- *** ADD THIS LINE ***
+    deleteTransaction, // Expose later if needed
   };
-});
+}); // End of defineStore

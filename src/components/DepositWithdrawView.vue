@@ -101,12 +101,11 @@ const closeModal = () => {
 <template>
   <div>
     <h1 class="text-2xl font-semibold text-gray-900 mb-4">
-      Deposit / Withdraw
+      ฝาก / ถอน
     </h1>
-
-    <div class="mt-6 p-6 bg-gray-50 rounded shadow-md relative"> <p class="mb-4 text-lg">Current Balance: <span class="font-semibold">{{ formattedBalance }} Baht</span></p>
-
-      <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
+    <div class="mt-6 p-6 bg-gray-50 rounded shadow-md relative"> 
+      <p class="mb-4 text-lg">จำนวนเงินคงเหลือ: <span class="font-semibold">{{ formattedBalance }} บาท</span></p>
+      <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">จำนวนเงิน *</label>
       <input
         type="text"
         id="amount"
