@@ -48,7 +48,7 @@ export const useTransactionStore = defineStore('transactions', () => {
         datetime: new Date().toISOString(), // Current date and time
         amount: numAmount, // Use the validated numeric amount
         type: type,
-        email: localStorage.getItem('userEmail') || 'unknown@example.com'
+        email: localStorage.getItem('userEmail') || 'email@gmail.com'
      };
     transactions.value.unshift(newTransaction); // Add to beginning
      return { success: true, message: `${type} successful.` };
