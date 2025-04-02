@@ -2,114 +2,121 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
+// Store the initial state separately to easily reset to it
+const initialBalance = 1000000;
+const initialTransactions = [
+    { id: 1, datetime: '2022-06-06T10:19:53Z', amount: 20000, type: 'Deposit', email: 'email@gmail.com' },
+    { id: 2, datetime: '2022-02-15T21:24:24Z', amount: 40000, type: 'Withdraw', email: 'email@gmail.com' },
+    { id: 3, datetime: '2021-12-31T23:59:49Z', amount: 100000, type: 'Withdraw', email: 'email@gmail.com' },
+];
+
 export const useTransactionStore = defineStore('transactions', () => {
-  // --- State --- (Existing balance and transactions refs)
-  const balance = ref(1000000);
-  const transactions = ref([
-     // Seed data...
-       { id: 1, datetime: '2022-06-06T10:19:53Z', amount: 20000, type: 'Deposit', email: 'email@gmail.com' },
-       { id: 2, datetime: '2022-02-15T21:24:24Z', amount: 40000, type: 'Withdraw', email: 'email@gmail.com' },
-       { id: 3, datetime: '2021-12-31T23:59:49Z', amount: 100000, type: 'Withdraw', email: 'email@gmail.com' },
-  ]);
+  // --- State ---
+  // Initialize state using the constants defined above
+  const balance = ref(initialBalance);
+  const transactions = ref([...initialTransactions]); // Use spread to clone array
 
-  // --- Getters --- (Existing formattedBalance)
+  // --- Getters ---
    const formattedBalance = computed(() => {
-    return balance.value.toLocaleString('en-US');
-  });
+    // Format balance with commas, handling potential non-numeric values gracefully
+     const numBalance = Number(balance.value);
+    return isNaN(numBalance) ? '0' : numBalance.toLocaleString('en-US');
+   });
 
-  // --- Actions --- (Existing addTransaction)
+  // --- Actions ---
   function addTransaction(type, amount) {
-    // ... (existing addTransaction logic) ...
+     // Ensure amount is a number before proceeding
+     const numAmount = Number(amount);
+     if (isNaN(numAmount) || numAmount <= 0) {
+         // Handle invalid amount if necessary, though validation should catch this in component
+         return { success: false, message: 'Invalid transaction amount.'}
+     }
+
      if (type === 'Deposit') {
-      balance.value += amount;
+      balance.value += numAmount;
     } else if (type === 'Withdraw') {
-      if (amount > balance.value) {
+      if (numAmount > balance.value) {
         return { success: false, message: 'Insufficient balance.' };
       }
-      balance.value -= amount;
+      balance.value -= numAmount;
     } else {
         return { success: false, message: 'Invalid transaction type.' };
     }
+
      const newTransaction = {
-        id: Date.now(), // Simple unique ID (can be improved later)
+        id: Date.now(), // Simple unique ID
         datetime: new Date().toISOString(), // Current date and time
-        amount: amount, // The amount passed to the function
-        type: type,     // The type ('Deposit' or 'Withdraw') passed to the function
-        // Attempt to get email stored during login, otherwise use a placeholder
+        amount: numAmount, // Use the validated numeric amount
+        type: type,
         email: localStorage.getItem('userEmail') || 'unknown@example.com'
      };
-    transactions.value.unshift(newTransaction);
+    transactions.value.unshift(newTransaction); // Add to beginning
      return { success: true, message: `${type} successful.` };
   }
 
-  // **NEW: Action to update a transaction**
   function updateTransaction(id, newAmount) {
+     // Ensure newAmount is a number
+     const numNewAmount = Number(newAmount);
+     if (isNaN(numNewAmount) || numNewAmount < 0) { // Allow 0 when editing
+         return { success: false, message: 'Invalid amount for update.' };
+     }
+
     const transactionIndex = transactions.value.findIndex(t => t.id === id);
     if (transactionIndex === -1) {
       return { success: false, message: 'Transaction not found.' };
     }
 
     const transaction = transactions.value[transactionIndex];
-    const oldAmount = transaction.amount;
-    const difference = newAmount - oldAmount; // Positive if amount increased, negative if decreased
+    // Ensure oldAmount is treated as a number
+    const numOldAmount = Number(transaction.amount);
+     if (isNaN(numOldAmount)) {
+         console.error(`Invalid old amount found for transaction ID: ${id}`);
+         return { success: false, message: 'Cannot update due to invalid existing data.' };
+     }
+
+    const difference = numNewAmount - numOldAmount;
 
     let potentialNewBalance;
     if (transaction.type === 'Deposit') {
-      // If a deposit amount changes, the balance changes by the difference
       potentialNewBalance = balance.value + difference;
     } else { // type === 'Withdraw'
-      // If a withdrawal amount changes, the balance changes by the *negative* of the difference
-      // (e.g., withdrawing less increases balance, withdrawing more decreases it)
       potentialNewBalance = balance.value - difference;
     }
 
-    // Check if the balance adjustment is valid (doesn't go below zero)
-    // This is a simplified check; real-world might be more complex
     if (potentialNewBalance < 0) {
         return { success: false, message: 'Edit results in negative balance.'}
     }
 
     // Apply the changes
     balance.value = potentialNewBalance;
-    transactions.value[transactionIndex].amount = newAmount;
-    // Optional: update a timestamp if needed
-    // transactions.value[transactionIndex].lastEdited = new Date().toISOString();
+    transactions.value[transactionIndex].amount = numNewAmount; // Store the numeric amount
 
     console.log(`Transaction ${id} updated. Balance recalculated.`);
     return { success: true, message: 'Transaction updated successfully.' };
   }
 
-   // Example Delete function placeholder (implement fully later)
-  // function deleteTransaction(id) { /* ... */ }
-  // **NEW: Action to delete a transaction**
+  // ** MODIFIED: Action to delete a transaction WITHOUT changing balance **
   function deleteTransaction(id) {
     const transactionIndex = transactions.value.findIndex(t => t.id === id);
     if (transactionIndex === -1) {
       return { success: false, message: 'Transaction not found.' };
     }
 
-    const transactionToDelete = transactions.value[transactionIndex];
-    const amount = transactionToDelete.amount;
-    const type = transactionToDelete.type;
-
-    // Adjust balance *before* removing the transaction
-    // Deleting a deposit means balance decreases
-    // Deleting a withdrawal means balance increases
-    if (type === 'Deposit') {
-      balance.value -= amount;
-    } else { // type === 'Withdraw'
-      balance.value += amount;
-      // Note: No negative balance check needed here, as we are reversing a past withdrawal.
-    }
+    // --- Balance adjustment logic is removed ---
 
     // Remove the transaction from the array
     transactions.value.splice(transactionIndex, 1);
 
-    console.log(`Transaction ${id} deleted. Balance recalculated.`);
+    console.log(`Transaction ${id} deleted. Balance was NOT recalculated.`); // Log message updated
     return { success: true, message: 'Transaction deleted successfully.' };
   }
 
-  // ... (rest of the store code: state, getters, actions definitions) ...
+  // ** NEW: Action to reset the store state **
+  function resetStore() {
+    balance.value = initialBalance;
+    transactions.value = [...initialTransactions]; // Reset to initial values using spread
+    console.log('Transaction store has been reset.');
+  }
 
   return {
     // State
@@ -119,7 +126,8 @@ export const useTransactionStore = defineStore('transactions', () => {
     formattedBalance,
     // Actions
     addTransaction,
-    updateTransaction, // <-- *** ADD THIS LINE ***
-    deleteTransaction, // Expose later if needed
+    updateTransaction,
+    deleteTransaction, // Delete action (no balance change)
+    resetStore, // Reset action
   };
 }); // End of defineStore

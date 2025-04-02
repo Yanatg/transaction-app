@@ -26,7 +26,7 @@ const handleLogin = () => {
   }
 
   // 2. Simulate Authentication
-  if (email.value === 'test@example.com' && password.value === 'password') {
+  if (email.value === 'email@gmail.com' && password.value === 'password') {
     console.log('Login Successful!');
     // 3. Handle Successful Login
      localStorage.setItem('isLoggedIn', 'true');
