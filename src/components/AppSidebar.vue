@@ -1,9 +1,6 @@
 <script setup>
-// ** FIX: Import defineProps and defineEmits from 'vue' **
 import { defineProps, defineEmits } from 'vue';
 
-// ** FIX: Call defineProps directly, no need for 'props' variable **
-// Define the props this component accepts
 defineProps({
   isOpen: {
     type: Boolean,
@@ -11,12 +8,11 @@ defineProps({
   }
 });
 
-// Define emit for closing sidebar when a link is clicked on mobile
+
 const emit = defineEmits(['close-sidebar']);
 
 const handleLinkClick = () => {
-    // Close sidebar automatically when a link is clicked on mobile
-    if (window.innerWidth < 768) { // 768px is Tailwind's default 'md' breakpoint
+    if (window.innerWidth < 768) {
         emit('close-sidebar');
     }
 }
@@ -25,12 +21,12 @@ const handleLinkClick = () => {
 <template>
   <aside
     :class="[
-      'bg-gray-100', 'shadow-md', 'h-full', 'z-20', // Base styles & z-index above overlay
-      'fixed', 'inset-y-0', 'left-0', // Mobile positioning: fixed
-      'w-64', // Width
-      'transform', 'transition-transform', 'duration-300', 'ease-in-out', // Transition
-      isOpen ? 'translate-x-0' : '-translate-x-full', // Slide in/out based on isOpen state
-      'md:relative', 'md:translate-x-0', 'md:block' // Desktop: relative, always visible block
+      'bg-gray-100', 'shadow-md', 'h-full', 'z-20',
+      'fixed', 'inset-y-0', 'left-0',
+      'w-64',
+      'transform', 'transition-transform', 'duration-300', 'ease-in-out',
+      isOpen ? 'translate-x-0' : '-translate-x-full',
+      'md:relative', 'md:translate-x-0', 'md:block'
     ]"
   >
     <div class="p-4"> 
@@ -63,7 +59,4 @@ const handleLinkClick = () => {
 </template>
 
 <style scoped>
-/* Ensure sidebar takes full height */
-/* 'h-full' class applied directly now */
-/* Remove min-height style if previously added */
 </style>

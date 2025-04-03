@@ -1,7 +1,7 @@
 <script setup>
-import { ref, onUnmounted } from 'vue'; // Import onUnmounted
+import { ref, onUnmounted } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useTransactionStore } from '@/stores/transactionStore'; // Adjust path if needed
+import { useTransactionStore } from '@/stores/transactionStore';
 
 const transactionStore = useTransactionStore();
 
@@ -15,15 +15,15 @@ const amountError = ref('');
 const showConfirmModal = ref(false);
 const confirmDetails = ref({ amount: null, type: null });
 
-// --- NEW: State for the success message ---
+// --- State for the success message ---
 const successMessage = ref('');
-const successTimeout = ref(null); // To store the setTimeout ID
+const successTimeout = ref(null);
 
 // --- Validation ---
 const validateAmount = () => {
   amountError.value = '';
-  successMessage.value = ''; // Clear success message on new input validation
-  if (successTimeout.value) clearTimeout(successTimeout.value); // Clear timeout on new validation
+  successMessage.value = '';
+  if (successTimeout.value) clearTimeout(successTimeout.value);
 
   const numAmount = Number(amount.value);
   if (amount.value === '' || amount.value === null) {
@@ -55,7 +55,7 @@ const handleWithdraw = () => {
   }
 };
 
-// --- Updated: Function to proceed after modal confirmation ---
+// --- Function to proceed after modal confirmation ---
 const proceedWithTransaction = () => {
   if (!confirmDetails.value.type || confirmDetails.value.amount === null) return;
 
@@ -67,29 +67,24 @@ const proceedWithTransaction = () => {
 
   if (result.success) {
     console.log(result.message);
-    // ** NEW: Show Success Message **
     const formattedAmount = confirmDetails.value.amount?.toLocaleString('en-US');
-    const actionText = confirmDetails.value.type === 'Deposit' ? 'ฝากเงิน' : 'ถอนเงิน'; // Thai action text
-    successMessage.value = `ทำรายการ ${actionText} จำนวน ${formattedAmount} บาท สำเร็จ`; // Set the success message
+    const actionText = confirmDetails.value.type === 'Deposit' ? 'ฝากเงิน' : 'ถอนเงิน'; 
+    successMessage.value = `ทำรายการ ${actionText} จำนวน ${formattedAmount} บาท สำเร็จ`; 
 
-    // Clear previous timeout if exists
     if (successTimeout.value) clearTimeout(successTimeout.value);
-    // Set timeout to clear the message after 4 seconds
     successTimeout.value = setTimeout(() => {
         successMessage.value = '';
     }, 4000);
-    // ** END NEW **
 
-    amount.value = ''; // Clear input on success
+    amount.value = '';
     amountError.value = '';
   } else {
-    // Show error from store
     amountError.value = result.message;
-    successMessage.value = ''; // Ensure success message is clear on error
-     if (successTimeout.value) clearTimeout(successTimeout.value); // Clear timeout on error
+    successMessage.value = '';
+     if (successTimeout.value) clearTimeout(successTimeout.value);
   }
 
-  closeModal(); // Close modal regardless
+  closeModal();
 };
 
 // --- Function to close/cancel modal ---
@@ -98,13 +93,12 @@ const closeModal = () => {
   confirmDetails.value = { amount: null, type: null };
 };
 
-// --- NEW: Clear timeout when component is unmounted ---
+// --- Clear timeout when component is unmounted ---
 onUnmounted(() => {
     if (successTimeout.value) {
         clearTimeout(successTimeout.value);
     }
 });
-
 </script>
 
 <template>
@@ -189,7 +183,3 @@ onUnmounted(() => {
 
   </div>
 </template>
-
-<style scoped>
-/* Add specific styles if needed */
-</style>

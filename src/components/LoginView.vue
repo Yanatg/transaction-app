@@ -6,44 +6,37 @@ const email = ref('');
 const password = ref('');
 const router = useRouter();
 
-// **NEW:** Add a reactive variable to hold the email error message
+
 const emailError = ref('');
-// Optional: Add a variable for general login errors
 const loginError = ref('');
 
 const handleLogin = () => {
   console.log('Attempting login with:', email.value, password.value);
 
-  // **Clear previous errors on new attempt**
   emailError.value = '';
   loginError.value = '';
 
-  // 1. Validate Email
+  // Validate Email
   if (!validateEmail(email.value)) {
-    // **Set the email error message instead of alert**
     emailError.value = 'Please enter a valid email address.';
-    return; // Stop the login process
+    return; 
   }
 
-  // 2. Simulate Authentication
+  // Simulate Authentication
   if (email.value === 'email@gmail.com' && password.value === 'password') {
     console.log('Login Successful!');
-    // 3. Handle Successful Login
      localStorage.setItem('isLoggedIn', 'true');
-     // Clear any potential leftover errors on success
      emailError.value = '';
      loginError.value = '';
      router.push('/dashboard');
   } else {
-    // **Set a general login error message instead of alert**
-    // alert('Invalid credentials.'); // Replace this alert too
     loginError.value = 'Invalid email or password.';
   }
 };
 
 const validateEmail = (email) => {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(String(email).toLowerCase()); // Added String() and toLowerCase() for robustness
+  return re.test(String(email).toLowerCase());
 };
 
 </script>

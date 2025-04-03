@@ -1,30 +1,30 @@
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'; // Import watch and onUnmounted
+import { ref, computed, watch, onUnmounted } from 'vue'; 
 import { storeToRefs } from 'pinia';
-import { useTransactionStore } from '@/stores/transactionStore'; // Adjust path if needed
+import { useTransactionStore } from '@/stores/transactionStore'; 
 
 const transactionStore = useTransactionStore();
 const { transactions } = storeToRefs(transactionStore);
 
-// --- State for Dropdown Sorting ---
+
 const sortOptions = [
   { value: 'datetime_desc', text: 'Date (Newest First)' },
   { value: 'datetime_asc', text: 'Date (Oldest First)' },
   { value: 'amount_desc', text: 'Amount (Highest First)' },
   { value: 'amount_asc', text: 'Amount (Lowest First)' },
 ];
-const selectedSortOption = ref(sortOptions[0].value); // Default to 'datetime_desc'
+const selectedSortOption = ref(sortOptions[0].value); 
 const sortKey = ref('datetime');
 const sortDirection = ref('desc');
 
-// --- Watcher to update sortKey and sortDirection based on dropdown ---
+
 watch(selectedSortOption, (newValue) => {
   const [key, direction] = newValue.split('_');
   sortKey.value = key;
   sortDirection.value = direction;
 });
 
-// --- Computed property for sorted transactions ---
+
 const sortedTransactions = computed(() => {
   const sorted = [...transactions.value];
   if (sortKey.value) {
@@ -47,7 +47,6 @@ const sortedTransactions = computed(() => {
 });
 
 
-// --- Helper Function: Format Date/Time ---
 const formatDateTime = (isoString) => {
   if (!isoString) return '';
   try {
@@ -62,33 +61,30 @@ const formatDateTime = (isoString) => {
   }
 };
 
-// --- Computed Property: Entry Count Text ---
 const entryCountText = computed(() => {
   const total = sortedTransactions.value.length;
   if (total === 0) return 'ไม่มีรายการ';
   return `แสดง 1 ถึง ${total} จาก ${total} รายการ`;
 });
 
-// --- Edit Modal State & Logic ---
+
 const showEditModal = ref(false);
 const editingTransaction = ref(null);
 const editAmount = ref('');
 const editAmountError = ref('');
 const handleEdit = (transaction) => { editingTransaction.value = { ...transaction }; editAmount.value = String(transaction.amount); editAmountError.value = ''; showEditModal.value = true; };
 const validateEditAmount = () => { editAmountError.value = ''; const numAmount = Number(editAmount.value); if (editAmount.value === '' || editAmount.value === null) { editAmountError.value = 'Amount is required.'; return false; } if (!/^\d+$/.test(editAmount.value)) { editAmountError.value = 'Please enter only numbers.'; return false; } if (numAmount < 0 || numAmount > 100000) { editAmountError.value = 'Amount must be between 0 and 100,000.'; return false; } return true; };
-// --> confirmEdit uses showToast now (defined below)
 const closeEditModal = () => { showEditModal.value = false; editingTransaction.value = null; editAmount.value = ''; editAmountError.value = ''; };
 
-// --- Delete Modal State & Logic ---
+
 const showDeleteModal = ref(false);
 const deletingTransaction = ref(null);
 const handleDelete = (transaction) => { deletingTransaction.value = transaction; showDeleteModal.value = true; };
-// --> confirmDelete uses showToast now (defined below)
 const closeDeleteModal = () => { showDeleteModal.value = false; deletingTransaction.value = null; };
 
-// --- Toast Notification State & Logic ---
+
 const toastMessage = ref('');
-const toastType = ref('success'); // 'success' or 'error'
+const toastType = ref('success');
 const toastTimeout = ref(null);
 
 const showToast = (message, type = 'success', duration = 4000) => {
@@ -98,48 +94,45 @@ const showToast = (message, type = 'success', duration = 4000) => {
     toastTimeout.value = setTimeout(() => { toastMessage.value = ''; }, duration);
 };
 
-// --- Updated confirmEdit to use showToast ---
+
 const confirmEdit = () => {
   if (validateEditAmount()) {
     const newAmount = Number(editAmount.value);
     if (editingTransaction.value && editingTransaction.value.id !== null) {
       const result = transactionStore.updateTransaction(editingTransaction.value.id, newAmount);
       if (result.success) {
-        showToast('แก้ไขรายการฝากเงินสำเร็จ', 'success'); // Show success toast
+        showToast('แก้ไขรายการฝากเงินสำเร็จ', 'success'); 
         closeEditModal();
       } else {
-        editAmountError.value = result.message; // Keep error in modal
-        // showToast(result.message, 'error'); // Optional: Also show error toast
+        editAmountError.value = result.message;
         console.error("Edit failed:", result.message);
       }
     } else {
       editAmountError.value = "Error: No transaction selected.";
-      // showToast("Error: No transaction selected.", 'error'); // Optional: Also show error toast
     }
   }
 };
 
-// --- Updated confirmDelete to use showToast ---
+
 const confirmDelete = () => {
   if (deletingTransaction.value && deletingTransaction.value.id !== null) {
     const result = transactionStore.deleteTransaction(deletingTransaction.value.id);
     if (result.success) {
-        showToast('ลบรายการถอนเงินสำเร็จ.', 'success'); // Show success toast
+        showToast('ลบรายการถอนเงินสำเร็จ.', 'success'); 
         console.log(result.message);
     } else {
-        showToast(`Error deleting transaction: ${result.message}`, 'error'); // Show error toast instead of alert
+        showToast(`Error deleting transaction: ${result.message}`, 'error');
         console.error("Delete failed:", result.message);
     }
     closeDeleteModal();
   } else {
-    showToast("Cannot confirm delete: No transaction selected.", 'error'); // Show error toast
+    showToast("Cannot confirm delete: No transaction selected.", 'error');
     console.error("Cannot confirm delete: No transaction selected.");
     closeDeleteModal();
   }
 };
 
 
-// --- Clear toast timeout when component is unmounted ---
 onUnmounted(() => {
     if (toastTimeout.value) {
         clearTimeout(toastTimeout.value);
@@ -157,8 +150,8 @@ onUnmounted(() => {
         <div
             v-if="toastMessage"
             :class="[
-                'fixed', 'top-5', 'left-1/2', '-translate-x-1/2', // Centering
-                'px-4', 'py-2', 'rounded', 'shadow-md', 'text-sm', 'font-medium', 'z-50', // Base styling
+                'fixed', 'top-5', 'left-1/2', '-translate-x-1/2',
+                'px-4', 'py-2', 'rounded', 'shadow-md', 'text-sm', 'font-medium', 'z-50',
                 toastType === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : '',
                 toastType === 'error' ? 'bg-red-100 text-red-800 border border-red-300' : ''
             ]"

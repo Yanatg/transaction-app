@@ -1,9 +1,9 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginView from '@/components/LoginView.vue';
-import DashboardLayout from '@/layouts/DasboardLayout.vue'; // Import the layout
-import DepositWithdrawView from '@/components/DepositWithdrawView.vue'; // Create this view later
-import TransactionHistoryView from '@/components/TransactionHistoryView.vue'; // Create this view later
+import DashboardLayout from '@/layouts/DasboardLayout.vue';
+import DepositWithdrawView from '@/components/DepositWithdrawView.vue'; 
+import TransactionHistoryView from '@/components/TransactionHistoryView.vue'; 
 
 const routes = [
   {
@@ -13,27 +13,25 @@ const routes = [
   },
   {
     path: '/dashboard',
-    component: DashboardLayout, // Use the layout for all /dashboard/* routes
-    meta: { requiresAuth: true }, // Optional: Add meta field for authentication check
+    component: DashboardLayout,
+    meta: { requiresAuth: true },
     children: [
       {
-        path: '', // Default child route for /dashboard (optional)
-        redirect: '/dashboard/deposit' // Redirect /dashboard to /dashboard/deposit
+        path: '',
+        redirect: '/dashboard/deposit' 
       },
       {
-        path: 'deposit', // Path is /dashboard/deposit
+        path: 'deposit', 
         name: 'deposit-withdraw',
-        component: DepositWithdrawView // This renders inside DashboardLayout's <router-view>
+        component: DepositWithdrawView 
       },
       {
-        path: 'transactions', // Path is /dashboard/transactions
+        path: 'transactions',
         name: 'transactions',
-        component: TransactionHistoryView // This renders inside DashboardLayout's <router-view>
+        component: TransactionHistoryView 
       }
     ]
   },
-  // Catch-all route (optional)
-  // { path: '/:pathMatch(.*)*', redirect: '/' }
 ];
 
 const router = createRouter({
@@ -41,15 +39,15 @@ const router = createRouter({
   routes
 });
 
-// Optional: Navigation Guard to check login status
+
 router.beforeEach((to, from, next) => {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
   if (requiresAuth && !isLoggedIn) {
-    next('/'); // Redirect to login if not logged in and route requires auth
+    next('/'); 
   } else {
-    next(); // Otherwise allow navigation
+    next(); 
   }
 });
 

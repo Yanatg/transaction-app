@@ -2,25 +2,19 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import { defineEmits } from 'vue';
-// ** NEW: Import the store **
-import { useTransactionStore } from '@/stores/transactionStore'; // Adjust path if needed
+import { useTransactionStore } from '@/stores/transactionStore';
 
 const router = useRouter();
 const emit = defineEmits(['toggle-sidebar']);
-// ** NEW: Get store instance **
 const transactionStore = useTransactionStore();
 
 const handleLogout = () => {
   console.log('Logging out...');
-
-  // ** NEW: Reset the transaction store state **
   transactionStore.resetStore();
 
-  // Clear login status from localStorage
   localStorage.removeItem('isLoggedIn');
   localStorage.removeItem('userEmail');
 
-  // Navigate to login page
   router.push('/');
 };
 

@@ -1,13 +1,12 @@
 // src/layouts/DashboardLayout.vue
 <script setup>
-import { ref } from 'vue'; // Import ref
+import { ref } from 'vue';
 import AppHeader from '@/components/AppHeader.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 
-// NEW: State to control mobile sidebar visibility
+
 const isSidebarOpen = ref(false);
 
-// NEW: Function to toggle the sidebar state
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value;
   console.log("Sidebar toggled:", isSidebarOpen.value);
@@ -34,7 +33,3 @@ const toggleSidebar = () => {
     ></div>
   </div>
 </template>
-
-<style scoped>
-/* Add any layout-specific styles if needed */
-</style>
