@@ -27,13 +27,13 @@ const validateAmount = () => {
 
   const numAmount = Number(amount.value);
   if (amount.value === '' || amount.value === null) {
-    amountError.value = 'Amount is required.'; return false;
+    amountError.value = 'กรุณาระบุจำนวนเงิน.'; return false;
   }
   if (!/^\d+$/.test(amount.value)) {
-    amountError.value = 'Please enter only numbers.'; return false;
+    amountError.value = 'กรุณาใส่เฉพาะตัวเลข'; return false;
   }
   if (numAmount <= 0 || numAmount > 100000) {
-    amountError.value = 'Amount must be between 1 and 100,000.'; return false;
+    amountError.value = 'จำนวนเงินต้องอยู่ระหว่าง 1 ถึง 100,000 บาท'; return false;
   }
   return true;
 };

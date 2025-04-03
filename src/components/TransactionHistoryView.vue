@@ -105,7 +105,7 @@ const confirmEdit = () => {
     if (editingTransaction.value && editingTransaction.value.id !== null) {
       const result = transactionStore.updateTransaction(editingTransaction.value.id, newAmount);
       if (result.success) {
-        showToast('ทำรายการสำเร็จ', 'success'); // Show success toast
+        showToast('แก้ไขรายการฝากเงินสำเร็จ', 'success'); // Show success toast
         closeEditModal();
       } else {
         editAmountError.value = result.message; // Keep error in modal
@@ -124,7 +124,7 @@ const confirmDelete = () => {
   if (deletingTransaction.value && deletingTransaction.value.id !== null) {
     const result = transactionStore.deleteTransaction(deletingTransaction.value.id);
     if (result.success) {
-        showToast('Transaction deleted successfully.', 'success'); // Show success toast
+        showToast('ลบรายการถอนเงินสำเร็จ.', 'success'); // Show success toast
         console.log(result.message);
     } else {
         showToast(`Error deleting transaction: ${result.message}`, 'error'); // Show error toast instead of alert

@@ -145,20 +145,27 @@ describe('Transaction Store', () => {
     expect(store.balance).toBe(initialBalance - (newAmount - oldAmount));
   });
 
-  // --- Test deleteTransaction ---
-  it('deletes a transaction and does NOT recalculate balance', () => {
+  it('deletes a transaction and recalculates balance correctly', () => {
     const store = useTransactionStore();
     const initialBalance = store.balance;
     const initialCount = store.transactions.length;
-    const transactionToDelete = { ...store.transactions[1] }; // Copy the second transaction
+    // Find a specific transaction to delete (e.g., the first withdrawal)
+    const transactionToDelete = store.transactions.find(t => t.type === 'Withdraw');
+    if (!transactionToDelete) throw new Error("Seed data missing withdrawal for test");
 
-    const result = store.deleteTransaction(transactionToDelete.id);
+    const deletedAmount = Number(transactionToDelete.amount);
+    const deletedId = transactionToDelete.id;
+
+    // Calculate expected balance: Deleting a withdrawal INCREASES balance
+    const expectedBalance = initialBalance + deletedAmount;
+
+    const result = store.deleteTransaction(deletedId);
 
     expect(result.success).toBe(true);
     expect(store.transactions.length).toBe(initialCount - 1);
-    expect(store.transactions.find(t => t.id === transactionToDelete.id)).toBeUndefined();
-    // Verify balance DID NOT change
-    expect(store.balance).toBe(initialBalance);
+    expect(store.transactions.find(t => t.id === deletedId)).toBeUndefined();
+    // ** MODIFIED Assertion: Verify balance WAS recalculated correctly **
+    expect(store.balance).toBe(expectedBalance);
   });
 
   it('returns error if deleting non-existent transaction', () => {
