@@ -169,7 +169,7 @@ onUnmounted(() => {
               บาท
             </p>
           </div>
-          <div class="items-center py-2 flex flex-row justify-end space-x-4">
+          <div class="items-center py-2 flex flex-row justify-start space-x-4">
             <button
               @click="proceedWithTransaction"
               class="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500"
