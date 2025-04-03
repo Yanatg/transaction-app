@@ -54,11 +54,11 @@ export const useTransactionStore = defineStore("transactions", () => {
       balance.value += numAmount;
     } else if (type === "Withdraw") {
       if (numAmount > balance.value) {
-        return { success: false, message: "Insufficient balance." };
+        return { success: false, message: "ยอดเงินคงเหลือไม่เพียงพอ" };
       }
       balance.value -= numAmount;
     } else {
-      return { success: false, message: "Invalid transaction type." };
+      return { success: false, message: "ประเภทธุรกรรมไม่ถูกต้อง" };
     }
 
     const newTransaction = {
@@ -77,12 +77,12 @@ export const useTransactionStore = defineStore("transactions", () => {
     const numNewAmount = Number(newAmount);
     if (isNaN(numNewAmount) || numNewAmount < 0) {
       // Allow 0 when editing
-      return { success: false, message: "Invalid amount for update." };
+      return { success: false, message: "จำนวนเงินไม่ถูกต้องสำหรับการอัปเดต" };
     }
 
     const transactionIndex = transactions.value.findIndex((t) => t.id === id);
     if (transactionIndex === -1) {
-      return { success: false, message: "Transaction not found." };
+      return { success: false, message: "ไม่พบธุรกรรม" };
     }
 
     const transaction = transactions.value[transactionIndex];
@@ -115,13 +115,13 @@ export const useTransactionStore = defineStore("transactions", () => {
     transactions.value[transactionIndex].amount = numNewAmount; // Store the numeric amount
 
     console.log(`Transaction ${id} updated. Balance recalculated.`);
-    return { success: true, message: "Transaction updated successfully." };
+    return { success: true, message: "อัปเดตธุรกรรมสำเร็จแล้ว" };
   }
 
   function deleteTransaction(id) {
     const transactionIndex = transactions.value.findIndex((t) => t.id === id);
     if (transactionIndex === -1) {
-      return { success: false, message: "Transaction not found." };
+      return { success: false, message: "ไม่พบธุรกรรม" };
     }
 
     const transactionToDelete = transactions.value[transactionIndex];
@@ -131,7 +131,7 @@ export const useTransactionStore = defineStore("transactions", () => {
       console.error(`Invalid amount found for transaction ID to delete: ${id}`);
       return {
         success: false,
-        message: "Cannot delete due to invalid existing data.",
+        message: "ไม่สามารถลบได้เนื่องจากข้อมูลที่มีอยู่ไม่ถูกต้อง",
       };
     }
     const type = transactionToDelete.type;

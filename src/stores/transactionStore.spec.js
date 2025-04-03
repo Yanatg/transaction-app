@@ -82,7 +82,7 @@ describe('Transaction Store', () => {
     const result = store.addTransaction('Withdraw', withdrawAmount);
 
     expect(result.success).toBe(false);
-    expect(result.message).toContain('Insufficient balance');
+    expect(result.message).toContain('ยอดเงินคงเหลือไม่เพียงพอ');
     expect(store.balance).toBe(500); // Balance should remain unchanged
     expect(store.transactions.length).toBe(initialCount); // No transaction added
   });
@@ -95,7 +95,7 @@ describe('Transaction Store', () => {
     const result = store.addTransaction('InvalidType', 100);
 
     expect(result.success).toBe(false);
-    expect(result.message).toContain('Invalid transaction type');
+    expect(result.message).toContain('ประเภทธุรกรรมไม่ถูกต้อง');
     expect(store.balance).toBe(initialBalance);
     expect(store.transactions.length).toBe(initialCount);
   });
@@ -172,6 +172,6 @@ describe('Transaction Store', () => {
      const store = useTransactionStore();
      const result = store.deleteTransaction(99999); // Non-existent ID
      expect(result.success).toBe(false);
-     expect(result.message).toContain('Transaction not found');
+     expect(result.message).toContain('ไม่พบธุรกรรม');
   });
 });
