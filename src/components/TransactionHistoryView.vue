@@ -105,7 +105,7 @@ const confirmEdit = () => {
     if (editingTransaction.value && editingTransaction.value.id !== null) {
       const result = transactionStore.updateTransaction(editingTransaction.value.id, newAmount);
       if (result.success) {
-        showToast('Transaction updated successfully.', 'success'); // Show success toast
+        showToast('ทำรายการสำเร็จ', 'success'); // Show success toast
         closeEditModal();
       } else {
         editAmountError.value = result.message; // Keep error in modal
