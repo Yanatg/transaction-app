@@ -1,12 +1,12 @@
 <script setup>
-import { ref, computed, watch } from 'vue'; // Import watch
+import { ref, computed, watch, onUnmounted } from 'vue'; // Import watch and onUnmounted
 import { storeToRefs } from 'pinia';
 import { useTransactionStore } from '@/stores/transactionStore'; // Adjust path if needed
 
 const transactionStore = useTransactionStore();
 const { transactions } = storeToRefs(transactionStore);
 
-// --- NEW: State for Dropdown Sorting ---
+// --- State for Dropdown Sorting ---
 const sortOptions = [
   { value: 'datetime_desc', text: 'Date (Newest First)' },
   { value: 'datetime_asc', text: 'Date (Oldest First)' },
@@ -14,21 +14,18 @@ const sortOptions = [
   { value: 'amount_asc', text: 'Amount (Lowest First)' },
 ];
 const selectedSortOption = ref(sortOptions[0].value); // Default to 'datetime_desc'
-
-// Refs to store the actual key and direction based on dropdown selection
 const sortKey = ref('datetime');
 const sortDirection = ref('desc');
 
-// --- NEW: Watcher to update sortKey and sortDirection based on dropdown ---
+// --- Watcher to update sortKey and sortDirection based on dropdown ---
 watch(selectedSortOption, (newValue) => {
-  const [key, direction] = newValue.split('_'); // e.g., 'datetime_desc' -> ['datetime', 'desc']
+  const [key, direction] = newValue.split('_');
   sortKey.value = key;
   sortDirection.value = direction;
 });
 
-// --- Computed property for sorted transactions (uses sortKey and sortDirection) ---
+// --- Computed property for sorted transactions ---
 const sortedTransactions = computed(() => {
-  // Sorting logic remains the same, but now driven by refs updated by the watcher
   const sorted = [...transactions.value];
   if (sortKey.value) {
     sorted.sort((a, b) => {
@@ -55,15 +52,9 @@ const formatDateTime = (isoString) => {
   if (!isoString) return '';
   try {
     const date = new Date(isoString);
-    // Example format: DD/MM/YYYY HH:MM:SS
-    return date.toLocaleString('en-GB', { // Or 'th-TH'
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
+    return date.toLocaleString('en-GB', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
     }).replace(',', '');
   } catch (error) {
     console.error("Error formatting date:", error);
@@ -73,8 +64,7 @@ const formatDateTime = (isoString) => {
 
 // --- Computed Property: Entry Count Text ---
 const entryCountText = computed(() => {
-  // ** Update to use sortedTransactions length if needed, though total is usually fine **
-  const total = sortedTransactions.value.length; // Or keep transactions.value.length for total count
+  const total = sortedTransactions.value.length;
   if (total === 0) return 'ไม่มีรายการ';
   return `แสดง 1 ถึง ${total} จาก ${total} รายการ`;
 });
@@ -86,15 +76,75 @@ const editAmount = ref('');
 const editAmountError = ref('');
 const handleEdit = (transaction) => { editingTransaction.value = { ...transaction }; editAmount.value = String(transaction.amount); editAmountError.value = ''; showEditModal.value = true; };
 const validateEditAmount = () => { editAmountError.value = ''; const numAmount = Number(editAmount.value); if (editAmount.value === '' || editAmount.value === null) { editAmountError.value = 'Amount is required.'; return false; } if (!/^\d+$/.test(editAmount.value)) { editAmountError.value = 'Please enter only numbers.'; return false; } if (numAmount < 0 || numAmount > 100000) { editAmountError.value = 'Amount must be between 0 and 100,000.'; return false; } return true; };
-const confirmEdit = () => { if (validateEditAmount()) { const newAmount = Number(editAmount.value); if (editingTransaction.value && editingTransaction.value.id !== null) { const result = transactionStore.updateTransaction(editingTransaction.value.id, newAmount); if (result.success) { closeEditModal(); } else { editAmountError.value = result.message; console.error("Edit failed:", result.message); } } else { editAmountError.value = "Error: No transaction selected."; } } };
+// --> confirmEdit uses showToast now (defined below)
 const closeEditModal = () => { showEditModal.value = false; editingTransaction.value = null; editAmount.value = ''; editAmountError.value = ''; };
 
 // --- Delete Modal State & Logic ---
 const showDeleteModal = ref(false);
 const deletingTransaction = ref(null);
 const handleDelete = (transaction) => { deletingTransaction.value = transaction; showDeleteModal.value = true; };
-const confirmDelete = () => { if (deletingTransaction.value && deletingTransaction.value.id !== null) { const result = transactionStore.deleteTransaction(deletingTransaction.value.id); if (result.success) { console.log(result.message); } else { console.error("Delete failed:", result.message); alert(`Error deleting transaction: ${result.message}`); } closeDeleteModal(); } else { console.error("Cannot confirm delete: No transaction selected."); closeDeleteModal(); } };
+// --> confirmDelete uses showToast now (defined below)
 const closeDeleteModal = () => { showDeleteModal.value = false; deletingTransaction.value = null; };
+
+// --- Toast Notification State & Logic ---
+const toastMessage = ref('');
+const toastType = ref('success'); // 'success' or 'error'
+const toastTimeout = ref(null);
+
+const showToast = (message, type = 'success', duration = 4000) => {
+    toastMessage.value = message;
+    toastType.value = type;
+    if (toastTimeout.value) clearTimeout(toastTimeout.value);
+    toastTimeout.value = setTimeout(() => { toastMessage.value = ''; }, duration);
+};
+
+// --- Updated confirmEdit to use showToast ---
+const confirmEdit = () => {
+  if (validateEditAmount()) {
+    const newAmount = Number(editAmount.value);
+    if (editingTransaction.value && editingTransaction.value.id !== null) {
+      const result = transactionStore.updateTransaction(editingTransaction.value.id, newAmount);
+      if (result.success) {
+        showToast('Transaction updated successfully.', 'success'); // Show success toast
+        closeEditModal();
+      } else {
+        editAmountError.value = result.message; // Keep error in modal
+        // showToast(result.message, 'error'); // Optional: Also show error toast
+        console.error("Edit failed:", result.message);
+      }
+    } else {
+      editAmountError.value = "Error: No transaction selected.";
+      // showToast("Error: No transaction selected.", 'error'); // Optional: Also show error toast
+    }
+  }
+};
+
+// --- Updated confirmDelete to use showToast ---
+const confirmDelete = () => {
+  if (deletingTransaction.value && deletingTransaction.value.id !== null) {
+    const result = transactionStore.deleteTransaction(deletingTransaction.value.id);
+    if (result.success) {
+        showToast('Transaction deleted successfully.', 'success'); // Show success toast
+        console.log(result.message);
+    } else {
+        showToast(`Error deleting transaction: ${result.message}`, 'error'); // Show error toast instead of alert
+        console.error("Delete failed:", result.message);
+    }
+    closeDeleteModal();
+  } else {
+    showToast("Cannot confirm delete: No transaction selected.", 'error'); // Show error toast
+    console.error("Cannot confirm delete: No transaction selected.");
+    closeDeleteModal();
+  }
+};
+
+
+// --- Clear toast timeout when component is unmounted ---
+onUnmounted(() => {
+    if (toastTimeout.value) {
+        clearTimeout(toastTimeout.value);
+    }
+});
 
 </script>
 
@@ -103,6 +153,20 @@ const closeDeleteModal = () => { showDeleteModal.value = false; deletingTransact
     <h1 class="text-xl md:text-2xl font-semibold text-gray-900 mb-4">
       ประวัติรายการฝาก / ถอน
     </h1>
+    <Transition name="fade">
+        <div
+            v-if="toastMessage"
+            :class="[
+                'fixed', 'top-5', 'left-1/2', '-translate-x-1/2', // Centering
+                'px-4', 'py-2', 'rounded', 'shadow-md', 'text-sm', 'font-medium', 'z-50', // Base styling
+                toastType === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : '',
+                toastType === 'error' ? 'bg-red-100 text-red-800 border border-red-300' : ''
+            ]"
+            role="alert"
+        >
+            {{ toastMessage }}
+        </div>
+    </Transition>
     <div class="mb-4 flex items-center justify-start">
         <label for="sort-select" class="mr-2 text-sm font-medium text-gray-700">Sort by:</label>
         <select
@@ -116,20 +180,19 @@ const closeDeleteModal = () => { showDeleteModal.value = false; deletingTransact
         </select>
     </div>
 
-
     <div class="mt-2">
       <div v-if="transactions.length === 0" class="text-center text-gray-500 py-4">
         ไม่มีรายการฝาก / ถอน
       </div>
       <table v-else class="min-w-full w-full bg-white shadow-md rounded text-xs md:text-sm">
         <thead class="bg-gray-200">
-          <tr>
-            <th class="py-1 px-2 md:py-2 md:px-4 border-b text-left font-semibold text-gray-600 uppercase tracking-wider">Datetime</th>
-            <th class="py-1 px-2 md:py-2 md:px-4 border-b text-left font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
-            <th class="py-1 px-2 md:py-2 md:px-4 border-b text-left font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-            <th class="py-1 px-2 md:py-2 md:px-4 border-b text-left font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">Email</th>
-            <th class="py-1 px-2 md:py-2 md:px-4 border-b text-left font-semibold text-gray-600 uppercase tracking-wider">Action</th>
-          </tr>
+            <tr>
+                <th class="py-1 px-2 md:py-2 md:px-4 border-b text-left font-semibold text-gray-600 uppercase tracking-wider">Datetime</th>
+                <th class="py-1 px-2 md:py-2 md:px-4 border-b text-left font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
+                <th class="py-1 px-2 md:py-2 md:px-4 border-b text-left font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                <th class="py-1 px-2 md:py-2 md:px-4 border-b text-left font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">Email</th>
+                <th class="py-1 px-2 md:py-2 md:px-4 border-b text-left font-semibold text-gray-600 uppercase tracking-wider">Action</th>
+            </tr>
         </thead>
         <tbody>
           <tr v-for="transaction in sortedTransactions" :key="transaction.id" class="hover:bg-gray-50">
@@ -152,7 +215,6 @@ const closeDeleteModal = () => { showDeleteModal.value = false; deletingTransact
         {{ entryCountText }}
       </p>
     </div>
-
     <div v-if="showEditModal && editingTransaction" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50 px-4">
       <div class="relative mx-auto p-4 border w-full max-w-sm shadow-lg rounded-md bg-white">
         <div class="mt-2 text-start">
@@ -234,3 +296,16 @@ const closeDeleteModal = () => { showDeleteModal.value = false; deletingTransact
 
   </div>
 </template>
+
+<style scoped>
+/* Basic fade transition for the toast */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
